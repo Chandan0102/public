@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Git commits</title>
+    <script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+</head>
+<body>
+
+    
+    <div id = 'committotalItemss'>
+        <script>
+          
+          $( document ).ready(function() {
+            getRepos();
+            });
+            let user;
+            let token ;
+            // Find all the repos of the user using getRepos function
+            async function getRepos() {
+                user = "Chandan0102"
+                token = "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";
+                const headers = {
+                    "Authorization" : `Token ${token}`
+            } 
+            const getUserReporepoUrl = 'https://api.github.com/users/'+user+'/repos';
+            const userRepos = await fetch(getUserReporepoUrl, {
+                "method": "GET",
+                "headers": headers
+            })
+            const userReposArr = await userRepos.json();
+            let dateArray=[];
+            for(let i=0;i<userReposArr.length;i++){
+                const userRepo = userReposArr[i].full_name
+                let pageCounter=1
+                let pageItems
+                let response //totalItems
+                let todayDate = "2023-03-01";
+                //alert(todayDate)
+                do{
+                    const repoUrl = "https://api.github.com/search/commits?q=repo:"+userRepo+" author-date:<"+todayDate+"&page="+pageCounter+"&per_page=2"
+                    response = await fetch(repoUrl, {
+                    "method": "GET",
+                    "headers": headers
+                })  
+                pageItems = await response.json()
+                for(n=0;n<pageItems.items.length;n++){
+                if(n<60){
+                    if(pageItems.items[n].commit.author.name === user){
+                        console.log((pageItems.items[n].commit.author.date))
+                        let userDate = new Date(pageItems.items[n].commit.author.date);
+                        dateArray.push(userDate.getTime());
+                    }
+                else{
+                    break;
+                }
+                }        
+                }            
+                
+                pageCounter++
+                console.log(pageCounter)
+               // alert(pageItems.total_count)
+                //console.log(totalItems.length)   
+                } while ((
+                    
+                    pageItems.total_count> (pageCounter-1)*2))
+           
+           
+            
+            }
+            if(dateArray.length >0){
+                console.log(dateArray.toString());
+                let sortedArr = dateArray.sort(); 
+                console.log(sortedArr.reverse())
+                let arrtop60 = sortedArr.splice(0,60)
+                console.log(arrtop60);
+                const sum = arrtop60.reduce((partialSum, a) => partialSum + a, 0);
+                const averDate = new Date(sum/arrtop60.length);
+                console.log("Mean for all Dates is",averDate)
+                
+            let csvContent = "data:text/csv;charset=utf-8," ;
+            arrtop60.forEach(function(rowArray) {
+            let row = rowArray
+            csvContent += new Date(row) + "\r\n";
+            });
+            var encodedUri = encodeURI(csvContent);
+            window.open(encodedUri);
+                
+            }
+            else {
+                console.log("No commit dates found for the user")
+            }
+            // const url = "https://api.github.com/search/repositories?q=stars:150000..300000"
+            // const responseStars = await fetch(url)
+            // const totalItemsStars = await responseStars.json()
+            // console.log(totalItemsStars)
+            
+            
+        }
+        </script> 
+
+    </div>
+    
+</body>
+</html>
